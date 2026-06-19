@@ -1,0 +1,70 @@
+.review-page {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 48px 24px;
+}
+
+.review-section {
+  margin-bottom: 22px;
+}
+
+.review-section label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.review-section textarea,
+.review-section select {
+  width: 100%;
+  min-height: 92px;
+  padding: 10px 12px;
+  resize: vertical;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  outline: none;
+}
+
+.review-section select {
+  min-height: auto;
+}
+
+.review-section textarea:focus,
+.review-section select:focus {
+  border-color: var(--accent);
+}
+
+.rating-row {
+  display: flex;
+  gap: 8px;
+}
+
+.rating-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+}
+
+.rating-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.review-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.review-saved {
+  color: var(--green);
+  font-size: 13px;
+  margin-bottom: 14px;
+}

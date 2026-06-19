@@ -1,0 +1,47 @@
+{
+  "name": "bclear",
+  "version": "0.1.0",
+  "private": true,
+  "description": "B-CLEAR desktop wrapper and project scripts",
+  "author": "B-CLEAR contributors",
+  "main": "desktop/main.cjs",
+  "scripts": {
+    "setup": "npm install && npm --prefix frontend install",
+    "setup:backend": "py -3 -m venv backend\\.venv && backend\\.venv\\Scripts\\python.exe -m pip install --upgrade pip && backend\\.venv\\Scripts\\python.exe -m pip install -r backend\\requirements.txt",
+    "dev": "concurrently \"npm run backend\" \"npm --prefix frontend run dev -- --host 127.0.0.1 --port 5173\"",
+    "backend": "cd backend && .venv\\Scripts\\python.exe -m uvicorn main:app --host 127.0.0.1 --port 8001",
+    "build": "npm --prefix frontend run build",
+    "desktop": "npm run build && electron .",
+    "dist": "npm run build && electron-builder"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "electron": "^31.7.7",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.bclear.planner",
+    "productName": "B-CLEAR",
+    "asar": false,
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "desktop/**/*",
+      "frontend/dist/**/*",
+      "backend/**/*",
+      "!backend/.env",
+      "!backend/bclear.db",
+      "!backend/__pycache__/**",
+      "!backend/venv/**",
+      "package.json"
+    ],
+    "extraMetadata": {
+      "main": "desktop/main.cjs"
+    },
+    "win": {
+      "target": "nsis",
+      "signAndEditExecutable": false
+    }
+  }
+}

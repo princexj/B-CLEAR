@@ -1,0 +1,157 @@
+.week-page {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 48px 24px;
+}
+
+.week-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 26px;
+}
+
+.week-head h1 {
+  font-size: 32px;
+}
+
+.week-streak {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.week-streak .mono {
+  color: var(--accent);
+}
+
+.week-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(82px, 1fr));
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.week-day {
+  min-height: 112px;
+  padding: 10px;
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  color: var(--text);
+}
+
+.week-day.active {
+  border-color: var(--accent);
+}
+
+.week-day-top {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.week-day-top strong {
+  color: var(--accent);
+  font-size: 18px;
+}
+
+.week-bar,
+.hours-bar {
+  height: 6px;
+  margin: 10px 0;
+  overflow: hidden;
+  background: var(--border);
+  border-radius: 999px;
+}
+
+.week-bar span,
+.hours-bar span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+
+.week-day-meta {
+  color: var(--text-dim);
+  font-size: 11px;
+}
+
+.week-detail {
+  padding: 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+}
+
+.week-detail-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.week-detail h2 {
+  font-size: 18px;
+}
+
+.week-detail-head span {
+  color: var(--text-dim);
+}
+
+.week-blocks {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.week-block {
+  display: grid;
+  grid-template-columns: 82px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 9px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+}
+
+.week-block span,
+.week-block em {
+  color: var(--text-dim);
+  font-size: 12px;
+  font-style: normal;
+}
+
+.week-block.done {
+  border-color: color-mix(in srgb, var(--green) 35%, transparent);
+}
+
+.week-block.skipped {
+  opacity: 0.55;
+}
+
+.week-empty {
+  color: var(--text-dim);
+  margin-top: 16px;
+}
+
+@media (max-width: 760px) {
+  .week-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .week-block {
+    grid-template-columns: 1fr;
+  }
+}

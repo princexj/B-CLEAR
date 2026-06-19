@@ -1,0 +1,32 @@
+.live-clock {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 10px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--surface) 92%, #0f2b2a), var(--surface));
+  border: 1px solid color-mix(in srgb, var(--border) 70%, var(--green));
+  border-radius: var(--r-sm);
+  color: var(--text);
+}
+
+.live-clock svg {
+  color: var(--green);
+}
+
+.live-clock strong,
+.live-clock span {
+  display: block;
+  line-height: 1.2;
+}
+
+.live-clock strong {
+  font-size: 13px;
+}
+
+.live-clock span {
+  margin-top: 1px;
+  color: var(--text-dim);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}

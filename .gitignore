@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Virtual environments
+venv/
+.venv/
+backend/.venv/
+
+# Environment and local data
+.env
+backend/.env
+backend/bclear.db
+*.db
+
+# Node
+node_modules/
+frontend/node_modules/
+
+# Builds
+frontend/dist/
+release/
+dist/
+
+# Logs and OS files
+*.log
+.DS_Store
+Thumbs.db

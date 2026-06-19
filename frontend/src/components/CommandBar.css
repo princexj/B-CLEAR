@@ -1,0 +1,110 @@
+.command-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 88px 20px 20px;
+  background: #0008;
+}
+
+.command-panel {
+  width: min(560px, 100%);
+  overflow: hidden;
+  background: #151519;
+  border: 1px solid color-mix(in srgb, var(--border) 70%, var(--accent));
+  border-radius: var(--r);
+  box-shadow: 0 24px 80px #000a;
+}
+
+.command-search {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.command-search svg {
+  color: var(--text-dim);
+}
+
+.command-search input {
+  width: 100%;
+  color: var(--text);
+  background: transparent;
+  border: 0;
+  outline: none;
+  font-size: 15px;
+}
+
+.command-search button {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-dim);
+  background: var(--border);
+  border-radius: 50%;
+}
+
+.command-list {
+  max-height: 360px;
+  overflow: auto;
+  padding: 8px;
+}
+
+.command-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 12px;
+  color: var(--text);
+  background: transparent;
+  border-radius: var(--r-sm);
+  text-align: left;
+}
+
+.command-item:hover {
+  background: color-mix(in srgb, var(--accent) 13%, transparent);
+}
+
+.command-item span {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.command-item svg {
+  color: var(--accent);
+}
+
+.command-item em,
+.command-empty,
+.command-footer {
+  color: var(--text-dim);
+  font-size: 12px;
+  font-style: normal;
+}
+
+.command-empty {
+  padding: 16px;
+}
+
+.command-footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 9px 14px;
+  border-top: 1px solid var(--border);
+}
+
+.command-footer span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}

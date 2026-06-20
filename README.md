@@ -9,20 +9,22 @@ It runs as:
 
 ## Features
 
-- AI-generated daily schedule from your priorities
-- Current-time aware planning, so new plans start from now
-- Live clock and current focus panel
-- Done, skip, missed, current, and upcoming task states
-- Mid-day task add and AI replan
-- Codeforces stats: rating, rank, recent accepted count, last contest, weak tags
-- LeetCode stats: streak, solved count by difficulty, recent submissions
-- Deadline tracker
-- Evening review flow
-- Weekly completion view
-- Carry-forward suggestions for skipped work
-- Planning modes: balanced, deep work, submission, recovery
-- Energy curve: morning, afternoon, evening, night
-- `Ctrl+K` command bar
+- **Premium Glassmorphic UI**: Beautiful, modern dashboard with interactive micro-animations.
+- **AI-Generated Daily Schedule**: Creates realistic time-blocked plans based on your energy and priorities.
+- **Unified Competitive Programming Dashboard**:
+  - **Codeforces**: Rating, rank, recent accepted count, weak tags, upcoming global contests.
+  - **LeetCode**: Streak, solved count by difficulty, recent submissions.
+  - **CodeChef**: Rating, stars, global rank, country rank.
+- **Interactive Unified Heatmap**: A single heatmap tracking your daily submissions across LeetCode, Codeforces, and CodeChef. Hover over squares for details.
+- **Quick Profile Links**: Direct 1-click links to your integrated profiles.
+- **Useful Links Manager**: Save and manage your favorite CP problems, tutorials, or tools right on the dashboard.
+- **Live Clock & Current Focus**: Never lose track of time with focus panels.
+- **Task Management**: Done, skip, missed, current, and upcoming task states.
+- **Mid-Day Adjustments**: Squeeze or replace tasks on the fly with AI replanning.
+- **Evening Review Flow & Carry-Forward**: Log what went well and carry forward skipped work to tomorrow.
+- **Planning Modes**: Balanced, deep work, submission, recovery.
+- **Energy Curve Modeling**: Morning, afternoon, evening, night.
+- **`Ctrl+K` Command Bar**: Fast keyboard navigation.
 
 ## Tech Stack
 

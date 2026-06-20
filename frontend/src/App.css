@@ -13,7 +13,9 @@
   border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
-  background: var(--bg);
+  background: rgba(9, 9, 11, 0.7);
+  backdrop-filter: var(--backdrop);
+  -webkit-backdrop-filter: var(--backdrop);
   z-index: 10;
 }
 
@@ -49,6 +51,7 @@
   border-radius: 100px;
   padding: 4px;
   overflow-x: auto;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
 .app-tools {
@@ -101,6 +104,11 @@
   width: 100%;
   padding: 0 24px;
   align-items: start;
+}
+
+.app-main.full-width {
+  grid-template-columns: 1fr;
+  max-width: 1200px;
 }
 
 .app-content {

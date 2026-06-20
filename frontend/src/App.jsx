@@ -7,6 +7,7 @@ import CommandBar from './components/CommandBar'
 import LiveClock from './components/LiveClock'
 import Settings from './pages/Settings'
 import Week from './pages/Week'
+import Dashboard from './pages/Dashboard'
 import { getTodayPlan } from './utils/api'
 import './App.css'
 
@@ -69,8 +70,7 @@ export default function App() {
           </button>
           <button
             className={`nav-btn ${view === 'schedule' ? 'active' : ''}`}
-            onClick={() => planData && setView('schedule')}
-            disabled={!planData}
+            onClick={() => setView(planData ? 'schedule' : 'plan')}
           >
             Today
           </button>
@@ -79,6 +79,12 @@ export default function App() {
             onClick={() => setView('week')}
           >
             Week
+          </button>
+          <button
+            className={`nav-btn ${view === 'dashboard' ? 'active' : ''}`}
+            onClick={() => setView('dashboard')}
+          >
+            Stats
           </button>
           <button
             className={`nav-btn ${view === 'settings' ? 'active' : ''}`}
@@ -93,7 +99,7 @@ export default function App() {
         </div>
       </header>
 
-      <main className="app-main">
+      <main className={`app-main ${view === 'dashboard' ? 'full-width' : ''}`}>
         <div className="app-content">
           {view === 'plan' && (
             <PlanForm onPlanGenerated={handlePlanGenerated} />
@@ -115,12 +121,15 @@ export default function App() {
             />
           )}
           {view === 'week' && <Week />}
+          {view === 'dashboard' && <Dashboard />}
           {view === 'settings' && <Settings onResetToday={handleReset} />}
         </div>
 
-        <aside className="app-sidebar">
-          <Deadlines />
-        </aside>
+        {view !== 'dashboard' && (
+          <aside className="app-sidebar">
+            <Deadlines />
+          </aside>
+        )}
       </main>
 
       <CommandBar

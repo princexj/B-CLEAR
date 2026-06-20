@@ -1,27 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg:       #0d0d0f;
-  --surface:  #16161a;
-  --border:   #242428;
-  --muted:    #3a3a42;
-  --text:     #e8e8f0;
-  --text-dim: #7a7a8c;
-  --accent:   #7c6aff;
-  --accent-2: #ff6a6a;
-  --green:    #4ade80;
-  --yellow:   #facc15;
+  --bg:       #09090b;
+  --bg-gradient: radial-gradient(circle at top left, rgba(67, 56, 202, 0.15) 0%, rgba(9, 9, 11, 1) 50%);
+  --surface:  rgba(24, 24, 27, 0.4);
+  --border:   rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(255, 255, 255, 0.15);
+  --muted:    rgba(39, 39, 42, 0.8);
+  --text:     #fafafa;
+  --text-dim: #a1a1aa;
+  --accent:   #8b5cf6;
+  --accent-hover: #7c3aed;
+  --accent-2: #f43f5e;
+  --green:    #10b981;
+  --yellow:   #f59e0b;
 
-  --font-body: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-heading: 'Outfit', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  --r: 10px;
-  --r-sm: 6px;
+  --r: 16px;
+  --r-sm: 8px;
+  --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  --backdrop: blur(12px);
 }
 
 html, body, #root {
-  height: 100%;
+  min-height: 100vh;
   background: var(--bg);
+  background-image: var(--bg-gradient);
+  background-attachment: fixed;
   color: var(--text);
   font-family: var(--font-body);
   font-size: 15px;
@@ -57,13 +67,31 @@ input, select, textarea { font-family: var(--font-body); }
 }
 
 .primary-btn {
-  background: var(--accent);
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
   color: #fff;
+  box-shadow: 0 4px 14px 0 rgba(139, 92, 246, 0.39);
+  transition: all 0.2s ease;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.primary-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.23);
 }
 
 .secondary-btn {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  backdrop-filter: var(--backdrop);
+  transition: all 0.2s ease;
+}
+.secondary-btn:hover {
   background: var(--border);
-  color: var(--text-dim);
+  border-color: var(--border-hover);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
 }
 
 .danger-btn {

@@ -4,7 +4,7 @@ import { getCfStats, getSettings, resetTodayPlan, saveSettings } from '../utils/
 import './Settings.css'
 
 export default function Settings({ onResetToday }) {
-  const [form, setForm] = useState({ cf_handle: '', lc_username: '', wake_time: '08:00', gym_time: '' })
+  const [form, setForm] = useState({ cf_handle: '', lc_username: '', cc_username: '', wake_time: '08:00', gym_time: '' })
   const [status, setStatus] = useState('')
   const [verifying, setVerifying] = useState(false)
 
@@ -12,6 +12,7 @@ export default function Settings({ onResetToday }) {
     getSettings().then(data => setForm({
       cf_handle: data.cf_handle || '',
       lc_username: data.lc_username || '',
+      cc_username: data.cc_username || '',
       wake_time: data.wake_time || '08:00',
       gym_time: data.gym_time || ''
     }))
@@ -64,6 +65,11 @@ export default function Settings({ onResetToday }) {
       <section className="settings-section">
         <label>LeetCode username</label>
         <input value={form.lc_username} onChange={e => update('lc_username', e.target.value)} placeholder="username" />
+      </section>
+
+      <section className="settings-section">
+        <label>CodeChef username</label>
+        <input value={form.cc_username} onChange={e => update('cc_username', e.target.value)} placeholder="username" />
       </section>
 
       <section className="settings-grid">

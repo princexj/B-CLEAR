@@ -9,6 +9,7 @@ import os
 from datetime import date, datetime, timedelta
 from dotenv import load_dotenv
 from urllib import request, parse, error
+import concurrent.futures
 
 load_dotenv()
 
@@ -70,6 +71,7 @@ def init_db():
             id INTEGER PRIMARY KEY CHECK (id = 1),
             cf_handle TEXT,
             lc_username TEXT,
+            cc_username TEXT,
             wake_time TEXT DEFAULT '08:00',
             gym_time TEXT DEFAULT '',
             updated_at TEXT DEFAULT CURRENT_TIMESTAMP
@@ -92,6 +94,7 @@ def init_db():
             recent_solved INTEGER DEFAULT 0,
             last_contest TEXT,
             weak_topics TEXT,
+            heat_map TEXT,
             fetched_at TEXT NOT NULL
         );
 
@@ -102,7 +105,27 @@ def init_db():
             medium INTEGER DEFAULT 0,
             hard INTEGER DEFAULT 0,
             recent_submissions TEXT,
+            heat_map TEXT,
             fetched_at TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS cc_cache (
+            username TEXT PRIMARY KEY,
+            rating INTEGER,
+            stars TEXT,
+            highest_rating INTEGER,
+            global_rank INTEGER,
+            country_rank INTEGER,
+            heat_map TEXT,
+            rating_data TEXT,
+            fetched_at TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS useful_links (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            url TEXT NOT NULL,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
         );
     """)
     conn.execute("""
@@ -143,8 +166,13 @@ class Deadline(BaseModel):
 class SettingsUpdate(BaseModel):
     cf_handle: Optional[str] = None
     lc_username: Optional[str] = None
+    cc_username: Optional[str] = None
     wake_time: Optional[str] = "08:00"
     gym_time: Optional[str] = ""
+
+class LinkPayload(BaseModel):
+    title: str
+    url: str
 
 class ReviewPayload(BaseModel):
     date: Optional[str] = None
@@ -184,6 +212,29 @@ def http_json(url: str, payload: Optional[dict] = None, headers: Optional[dict] 
     with request.urlopen(req, timeout=12) as res:
         return json.loads(res.read().decode("utf-8"))
 
+upcoming_contest_cache = {"data": None, "fetched_at": None}
+
+def get_upcoming_contest():
+    global upcoming_contest_cache
+    now = datetime.now()
+    if upcoming_contest_cache["data"] and upcoming_contest_cache["fetched_at"]:
+        if now - upcoming_contest_cache["fetched_at"] < timedelta(hours=1):
+            return upcoming_contest_cache["data"]
+    try:
+        res = http_json("https://codeforces.com/api/contest.list")
+        if res.get("status") == "OK":
+            contests = [c for c in res.get("result", []) if c.get("phase") == "BEFORE"]
+            if contests:
+                contests.sort(key=lambda x: x.get("startTimeSeconds", 0))
+                c = contests[0]
+                dt = datetime.fromtimestamp(c.get("startTimeSeconds", 0)).strftime('%b %d, %H:%M')
+                upcoming_contest_cache["data"] = f"{c.get('name')} ({dt})"
+                upcoming_contest_cache["fetched_at"] = now
+                return upcoming_contest_cache["data"]
+    except:
+        pass
+    return None
+
 def parse_dt(value: Optional[str]) -> Optional[datetime]:
     try:
         return datetime.fromisoformat(value) if value else None
@@ -194,7 +245,7 @@ def get_settings_row() -> dict:
     conn = get_db()
     row = conn.execute("SELECT * FROM users WHERE id=1").fetchone()
     conn.close()
-    return dict(row) if row else {"cf_handle": None, "lc_username": None, "wake_time": "08:00", "gym_time": ""}
+    return dict(row) if row else {"cf_handle": None, "lc_username": None, "cc_username": None, "wake_time": "08:00", "gym_time": ""}
 
 def fetch_cf_stats(handle: str, force: bool = False) -> dict:
     handle = handle.strip()
@@ -209,6 +260,7 @@ def fetch_cf_stats(handle: str, force: bool = False) -> dict:
             conn.close()
             data = dict(cached)
             data["weak_topics"] = json.loads(data.get("weak_topics") or "[]")
+            data["heat_map"] = json.loads(data.get("heat_map") or "[]")
             return data
 
     try:
@@ -218,19 +270,27 @@ def fetch_cf_stats(handle: str, force: bool = False) -> dict:
         user = info["result"][0]
         seven_days_ago = int(datetime.now().timestamp()) - 7 * 24 * 60 * 60
         submissions = http_json(
-            f"https://codeforces.com/api/user.status?handle={parse.quote(handle)}&from=1&count=200"
+            f"https://codeforces.com/api/user.status?handle={parse.quote(handle)}"
         ).get("result", [])
 
         solved = set()
         weak_tags = {}
+        cf_calendar = {}
         for sub in submissions:
             problem = sub.get("problem", {})
             pid = f"{problem.get('contestId', '')}-{problem.get('index', '')}"
-            if sub.get("creationTimeSeconds", 0) >= seven_days_ago and sub.get("verdict") == "OK":
+            creation_time = sub.get("creationTimeSeconds", 0)
+            verdict = sub.get("verdict")
+            if creation_time >= seven_days_ago and verdict == "OK":
                 solved.add(pid)
-            if sub.get("verdict") not in (None, "OK"):
+            if verdict not in (None, "OK"):
                 for tag in problem.get("tags", []):
                     weak_tags[tag] = weak_tags.get(tag, 0) + 1
+            if verdict == "OK":
+                date_str = datetime.fromtimestamp(creation_time).strftime('%Y-%m-%d')
+                cf_calendar[date_str] = cf_calendar.get(date_str, 0) + 1
+
+        heat_map = [{"date": d, "value": v} for d, v in cf_calendar.items()]
 
         contests = http_json(f"https://codeforces.com/api/user.rating?handle={parse.quote(handle)}").get("result", [])
         last_contest = None
@@ -246,16 +306,18 @@ def fetch_cf_stats(handle: str, force: bool = False) -> dict:
             "recent_solved": len(solved),
             "last_contest": last_contest,
             "weak_topics": [tag for tag, _ in sorted(weak_tags.items(), key=lambda x: x[1], reverse=True)[:3]],
+            "heat_map": heat_map,
             "fetched_at": datetime.now().isoformat()
         }
         conn.execute("""
-            INSERT INTO cf_cache (handle, rating, rank, recent_solved, last_contest, weak_topics, fetched_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO cf_cache (handle, rating, rank, recent_solved, last_contest, weak_topics, heat_map, fetched_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(handle) DO UPDATE SET
                 rating=excluded.rating, rank=excluded.rank, recent_solved=excluded.recent_solved,
-                last_contest=excluded.last_contest, weak_topics=excluded.weak_topics, fetched_at=excluded.fetched_at
+                last_contest=excluded.last_contest, weak_topics=excluded.weak_topics,
+                heat_map=excluded.heat_map, fetched_at=excluded.fetched_at
         """, (stats["handle"], stats["rating"], stats["rank"], stats["recent_solved"],
-              stats["last_contest"], json.dumps(stats["weak_topics"]), stats["fetched_at"]))
+              stats["last_contest"], json.dumps(stats["weak_topics"]), json.dumps(stats["heat_map"]), stats["fetched_at"]))
         conn.commit()
         conn.close()
         return stats
@@ -279,6 +341,7 @@ def fetch_lc_stats(username: str, force: bool = False) -> dict:
             conn.close()
             data = dict(cached)
             data["recent_submissions"] = json.loads(data.get("recent_submissions") or "[]")
+            data["heat_map"] = json.loads(data.get("heat_map") or "[]")
             return data
 
     query = """
@@ -316,6 +379,11 @@ def fetch_lc_stats(username: str, force: bool = False) -> dict:
             streak += 1
             cursor -= timedelta(days=1)
 
+        heat_map = []
+        for ts_str, count in calendar.items():
+            dt = datetime.fromtimestamp(int(ts_str))
+            heat_map.append({"date": dt.strftime('%Y-%m-%d'), "value": count})
+
         stats = {
             "username": user.get("username", username),
             "streak": streak,
@@ -323,16 +391,18 @@ def fetch_lc_stats(username: str, force: bool = False) -> dict:
             "medium": counts["Medium"],
             "hard": counts["Hard"],
             "recent_submissions": data.get("recentAcSubmissionList") or [],
+            "heat_map": heat_map,
             "fetched_at": datetime.now().isoformat()
         }
         conn.execute("""
-            INSERT INTO lc_cache (username, streak, easy, medium, hard, recent_submissions, fetched_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO lc_cache (username, streak, easy, medium, hard, recent_submissions, heat_map, fetched_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(username) DO UPDATE SET
                 streak=excluded.streak, easy=excluded.easy, medium=excluded.medium,
-                hard=excluded.hard, recent_submissions=excluded.recent_submissions, fetched_at=excluded.fetched_at
+                hard=excluded.hard, recent_submissions=excluded.recent_submissions, 
+                heat_map=excluded.heat_map, fetched_at=excluded.fetched_at
         """, (stats["username"], stats["streak"], stats["easy"], stats["medium"], stats["hard"],
-              json.dumps(stats["recent_submissions"]), stats["fetched_at"]))
+              json.dumps(stats["recent_submissions"]), json.dumps(stats["heat_map"]), stats["fetched_at"]))
         conn.commit()
         conn.close()
         return stats
@@ -342,6 +412,58 @@ def fetch_lc_stats(username: str, force: bool = False) -> dict:
     except Exception as exc:
         conn.close()
         raise HTTPException(status_code=502, detail=f"LeetCode fetch failed: {exc}")
+
+def fetch_cc_stats(username: str, force: bool = False) -> dict:
+    username = username.strip()
+    if not username:
+        raise HTTPException(status_code=400, detail="CodeChef username is required")
+
+    conn = get_db()
+    cached = conn.execute("SELECT * FROM cc_cache WHERE lower(username)=lower(?)", (username,)).fetchone()
+    if cached and not force:
+        fetched_at = parse_dt(cached["fetched_at"])
+        if fetched_at and datetime.now() - fetched_at < timedelta(hours=1):
+            conn.close()
+            data = dict(cached)
+            data["heat_map"] = json.loads(data.get("heat_map") or "[]")
+            data["rating_data"] = json.loads(data.get("rating_data") or "[]")
+            return data
+
+    try:
+        data = http_json(f"https://codechef-api.vercel.app/handle/{parse.quote(username)}")
+        if not data.get("success"):
+            raise HTTPException(status_code=404, detail="CodeChef username not found")
+
+        stats = {
+            "username": data.get("name") or username,
+            "rating": data.get("currentRating", 0),
+            "stars": data.get("stars", ""),
+            "highest_rating": data.get("highestRating", 0),
+            "global_rank": data.get("globalRank", 0),
+            "country_rank": data.get("countryRank", 0),
+            "heat_map": data.get("heatMap", []),
+            "rating_data": data.get("ratingData", []),
+            "fetched_at": datetime.now().isoformat()
+        }
+        
+        conn.execute("""
+            INSERT INTO cc_cache (username, rating, stars, highest_rating, global_rank, country_rank, heat_map, rating_data, fetched_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(username) DO UPDATE SET
+                rating=excluded.rating, stars=excluded.stars, highest_rating=excluded.highest_rating,
+                global_rank=excluded.global_rank, country_rank=excluded.country_rank,
+                heat_map=excluded.heat_map, rating_data=excluded.rating_data, fetched_at=excluded.fetched_at
+        """, (stats["username"], stats["rating"], stats["stars"], stats["highest_rating"], stats["global_rank"], stats["country_rank"],
+              json.dumps(stats["heat_map"]), json.dumps(stats["rating_data"]), stats["fetched_at"]))
+        conn.commit()
+        conn.close()
+        return stats
+    except HTTPException:
+        conn.close()
+        raise
+    except Exception as exc:
+        conn.close()
+        raise HTTPException(status_code=502, detail=f"CodeChef fetch failed: {exc}")
 
 def get_recent_reviews(limit: int = 3) -> list:
     conn = get_db()
@@ -552,11 +674,12 @@ def save_settings(settings: SettingsUpdate):
     conn = get_db()
     conn.execute("""
         UPDATE users
-        SET cf_handle=?, lc_username=?, wake_time=?, gym_time=?, updated_at=?
+        SET cf_handle=?, lc_username=?, cc_username=?, wake_time=?, gym_time=?, updated_at=?
         WHERE id=1
     """, (
         (settings.cf_handle or "").strip() or None,
         (settings.lc_username or "").strip() or None,
+        (settings.cc_username or "").strip() or None,
         settings.wake_time or "08:00",
         settings.gym_time or "",
         datetime.now().isoformat()
@@ -582,6 +705,61 @@ def cf_stats(handle: str = Query(...), force: bool = False):
 @app.get("/lc/stats")
 def lc_stats(username: str = Query(...), force: bool = False):
     return fetch_lc_stats(username, force)
+
+@app.get("/cc/stats")
+def cc_stats(username: str = Query(...), force: bool = False):
+    return fetch_cc_stats(username, force)
+
+@app.get("/links")
+def get_links():
+    conn = get_db()
+    rows = conn.execute("SELECT * FROM useful_links ORDER BY created_at DESC").fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+@app.post("/links")
+def add_link(payload: LinkPayload):
+    conn = get_db()
+    conn.execute("INSERT INTO useful_links (title, url) VALUES (?, ?)", (payload.title, payload.url))
+    conn.commit()
+    conn.close()
+    return {"success": True}
+
+@app.delete("/links/{link_id}")
+def delete_link(link_id: int):
+    conn = get_db()
+    conn.execute("DELETE FROM useful_links WHERE id=?", (link_id,))
+    conn.commit()
+    conn.close()
+    return {"success": True}
+
+@app.get("/stats/unified")
+def get_unified_stats(force: bool = False):
+    settings = get_settings_row()
+    stats = {"cf": None, "lc": None, "cc": None}
+    
+    def fetch_cf():
+        if settings.get("cf_handle"):
+            try: stats["cf"] = fetch_cf_stats(settings["cf_handle"], force)
+            except: pass
+            
+    def fetch_lc():
+        if settings.get("lc_username"):
+            try: stats["lc"] = fetch_lc_stats(settings["lc_username"], force)
+            except: pass
+            
+    def fetch_cc():
+        if settings.get("cc_username"):
+            try: stats["cc"] = fetch_cc_stats(settings["cc_username"], force)
+            except: pass
+
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        futures = [executor.submit(f) for f in [fetch_cf, fetch_lc, fetch_cc]]
+        concurrent.futures.wait(futures)
+        
+    stats["upcoming_contest"] = get_upcoming_contest()
+        
+    return stats
 
 
 @app.post("/plan/generate")

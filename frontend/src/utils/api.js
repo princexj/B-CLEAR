@@ -47,6 +47,18 @@ export async function getLcStats(username, force = false) {
   return res.json()
 }
 
+export async function getCcStats(username, force = false) {
+  const res = await fetch(`${BASE}/cc/stats?username=${encodeURIComponent(username)}&force=${force}`)
+  if (!res.ok) throw new Error(await res.text())
+  return res.json()
+}
+
+export async function getUnifiedStats(force = false) {
+  const res = await fetch(`${BASE}/stats/unified?force=${force}`)
+  if (!res.ok) throw new Error(await res.text())
+  return res.json()
+}
+
 export async function updateTask(id, status, reason = null) {
   const res = await fetch(`${BASE}/tasks/${id}`, {
     method: 'PATCH',
@@ -128,5 +140,25 @@ export async function getInsights() {
 
 export async function getCarryForward() {
   const res = await fetch(`${BASE}/carry-forward`)
+  return res.json()
+}
+
+export async function getLinks() {
+  const res = await fetch(`${BASE}/links`)
+  return res.json()
+}
+
+export async function addLink(payload) {
+  const res = await fetch(`${BASE}/links`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+  if (!res.ok) throw new Error(await res.text())
+  return res.json()
+}
+
+export async function deleteLink(id) {
+  const res = await fetch(`${BASE}/links/${id}`, { method: 'DELETE' })
   return res.json()
 }

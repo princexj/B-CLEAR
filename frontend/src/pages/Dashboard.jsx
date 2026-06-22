@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react'
 import { getUnifiedStats, getSettings, getLinks, addLink, deleteLink } from '../utils/api'
 import { ActivityCalendar } from 'react-activity-calendar'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
+import { Tooltip as ReactTooltip } from 'react-tooltip'
+import 'react-tooltip/dist/react-tooltip.css'
 import { Trophy, Code2, Activity, Plus, Trash2, ExternalLink } from 'lucide-react'
 import './Dashboard.css'
 
@@ -158,7 +160,8 @@ export default function Dashboard() {
           </div>
           <div className="heatmap-card glass-panel">
             <p className="dim mb-2 text-sm">Unified Activity Heatmap</p>
-            {combinedHeatData.length >= 1 ? (
+            {stats.cf?.heat_map || stats.lc?.heat_map ? (
+              <>
                <ActivityCalendar 
                  data={combinedHeatData} 
                  theme={{ light: ['#27272a', '#10b981'], dark: ['#27272a', '#10b981'] }}
@@ -166,10 +169,13 @@ export default function Dashboard() {
                  renderBlock={(block, activity) => (
                    React.cloneElement(block, {
                      key: activity.date,
-                     children: <title>{`${activity.count} questions solved on ${activity.date}`}</title>
+                     'data-tooltip-id': 'heatmap-tooltip',
+                     'data-tooltip-content': `${activity.count} questions solved on ${activity.date}`
                    })
                  )}
                />
+               <ReactTooltip id="heatmap-tooltip" className="glass-panel" style={{ zIndex: 100, backgroundColor: 'var(--surface)' }} />
+              </>
             ) : (
                <div className="h-full flex items-center justify-center dim">Activity Heatmap Unavailable</div>
             )}
